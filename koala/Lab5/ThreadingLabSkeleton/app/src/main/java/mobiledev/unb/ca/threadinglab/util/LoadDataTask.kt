@@ -5,7 +5,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.ProgressBar
+import android.widget.Toast
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import mobiledev.unb.ca.threadinglab.MyAdapter
 import mobiledev.unb.ca.threadinglab.model.Course
@@ -36,7 +38,7 @@ class LoadDataTask(private val activity: AppCompatActivity) {
 
                 // TODO 1
                 //  Load the data from the JSON assets file and return the list of courses
-
+                val newCourses = JsonUtils.processJSON(appContext)
                 // Simulate a long-running operation
                 for (i in 1 until DOWNLOAD_TIME) {
                     sleep()
@@ -47,6 +49,7 @@ class LoadDataTask(private val activity: AppCompatActivity) {
                 //  HINT:
                 //   This call must be made sending a post message through the
                 //   mainHandler to the UI thread
+                mainHandler.post{updateDisplay(newCourses)}
             }
     }
 
@@ -62,6 +65,7 @@ class LoadDataTask(private val activity: AppCompatActivity) {
     private fun updateDisplay(courseList: ArrayList<Course>) {
         // TODO 3
         //  Pass in the course list to the setupRecyclerView method
+        setupRecyclerView(courseList)
 
         // Hide the circular progress indicator
         circularProgressIndicator!!.visibility = ProgressBar.INVISIBLE
@@ -70,6 +74,8 @@ class LoadDataTask(private val activity: AppCompatActivity) {
         //  Create a Toast indicating that the file has been loaded
         //    HINT: Read this for help with Toast:
         //    http://developer.android.com/guide/topics/ui/notifiers/toasts.html
+        val toast = Toast.makeText(appContext, "File has been loaded!", Toast.LENGTH_LONG)
+        toast.show()
     }
 
     private fun setupRecyclerView(courseList: ArrayList<Course>) {

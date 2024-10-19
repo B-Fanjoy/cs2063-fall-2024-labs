@@ -4,6 +4,9 @@ import android.Manifest
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.*
+import android.content.ContentValues.TAG
+import android.content.Intent.ACTION_BATTERY_LOW
+import android.content.Intent.ACTION_BATTERY_OKAY
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -11,9 +14,11 @@ import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
@@ -27,6 +32,7 @@ import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 class MainActivity : AppCompatActivity() {
     // Attributes for storing the file photo path
     private lateinit var currentPhotoPath: String
@@ -36,8 +42,8 @@ class MainActivity : AppCompatActivity() {
     private var cameraActivityResultLauncher: ActivityResultLauncher<Intent>? = null
 
     // Attributes for working with an alarm
-    private var alarmManager: AlarmManager? = null
-    private lateinit var alarmReceiverIntent: PendingIntent
+    private var alarmMgr: AlarmManager? = null
+    private lateinit var alarmIntent: PendingIntent
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,17 +53,39 @@ class MainActivity : AppCompatActivity() {
         cameraButton.setOnClickListener { dispatchTakePhotoIntent() }
 
         // Ensure the permissions are set for posting notifications
+<<<<<<< Updated upstream
         // TODO: Uncomment to enable permissions check
         // checkNotificationPermissions()
+=======
+        checkNotificationPermissions()
+>>>>>>> Stashed changes
 
         // Register the activity listener
         setCameraActivityResultLauncher()
+
+        alarmMgr = this.getSystemService(ALARM_SERVICE) as AlarmManager
+        alarmIntent = Intent(this, AlarmReceiver::class.java).let { intent ->
+            PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        }
+
+        alarmMgr?.setInexactRepeating(
+            AlarmManager.RTC_WAKEUP,
+            SystemClock.elapsedRealtime(),
+            60000,
+            alarmIntent
+        )
+
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(ACTION_BATTERY_OKAY)
+        intentFilter.addAction(ACTION_BATTERY_LOW)
+        registerReceiver(batteryInfoReceiver, intentFilter)
     }
 
     override fun onDestroy() {
         super.onDestroy()
 
         // TODO: Unregister the battery receivers to avoid memory leaks
+        unregisterReceiver(batteryInfoReceiver)
     }
 
     /**
@@ -88,7 +116,23 @@ class MainActivity : AppCompatActivity() {
     // Battery info receiver functions
     private val batteryInfoReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            // TODO: Define the battery intent handers 
+            // TODO: Define the battery intent handers
+            if (intent.action == (Intent.ACTION_BATTERY_LOW)) {
+                alarmMgr!!.cancel(alarmIntent)
+                val toast =
+                    Toast.makeText(context, "Battery Low - Alarm Cancelled", Toast.LENGTH_SHORT)
+                toast.show()
+            }
+            if (intent.action == (Intent.ACTION_BATTERY_OKAY)) {
+                alarmMgr?.setInexactRepeating(
+                    AlarmManager.RTC_WAKEUP,
+                    SystemClock.elapsedRealtime(),
+                    60000,
+                    alarmIntent
+                )
+                val toast2 = Toast.makeText(context, "Battery Okay - Alarm Resumed", Toast.LENGTH_SHORT)
+                toast2.show()
+            }
         }
     }
 

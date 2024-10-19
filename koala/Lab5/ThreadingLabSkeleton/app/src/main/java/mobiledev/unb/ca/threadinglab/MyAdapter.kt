@@ -1,6 +1,7 @@
 package mobiledev.unb.ca.threadinglab
 
 import android.app.Activity
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.TextView
@@ -36,9 +37,11 @@ class MyAdapter(private val parentActivity: Activity, private val mDataset: Arra
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         // TODO 1
         //  Get the Course at index position in mDataSet
+        val course = mDataset.get(position)
 
         // TODO 2
         //  Set the TextView in the ViewHolder (holder) to be the title for this Course
+        holder.mTextView.setText(course.title)
 
         holder.mTextView.setOnClickListener {
             // TODO 3
@@ -48,6 +51,10 @@ class MyAdapter(private val parentActivity: Activity, private val mDataset: Arra
             //  HINT: You will need to put two extra pieces of information in this intent:
             //      The Course title
             //      The Course description
+            val intent = Intent(parentActivity, DetailActivity::class.java)
+            intent.putExtra("name", course.title)
+            intent.putExtra("description", course.description)
+            parentActivity.startActivity(intent)
         }
     }
 

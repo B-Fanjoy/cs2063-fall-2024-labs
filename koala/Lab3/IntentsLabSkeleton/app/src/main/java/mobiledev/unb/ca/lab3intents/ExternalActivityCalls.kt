@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaScannerConnection
+import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -18,6 +19,12 @@ import androidx.annotation.RequiresApi
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
+import android.widget.Button
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
+import java.text.SimpleDateFormat
+import java.util.Date
 
 class ExternalActivityCalls : AppCompatActivity() {
     // Attributes for storing the file photo path
@@ -30,13 +37,45 @@ class ExternalActivityCalls : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.external_activity_calls)
 
+        val cameraButton = findViewById<Button>(R.id.camera)
+        val emailButton = findViewById<Button>(R.id.email)
+        val backButton = findViewById<Button>(R.id.back)
+        cameraButton.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
+        emailButton.setOnClickListener {
+            dispatchSendEmailIntent()
+        }
+        backButton.setOnClickListener {
+            val intent = Intent(this@ExternalActivityCalls, MainActivity::class.java)
+            startActivity(intent)
+            this.finish()
+        }
+
         // Register the activity listener
         setCameraActivityResultLauncher()
+    }
+
+    private fun dispatchSendEmailIntent() {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("mailto:")
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("bfanjoy@unb.ca",))
+            putExtra(Intent.EXTRA_SUBJECT, "CS2063 Lab 3")
+            putExtra(Intent.EXTRA_TEXT, "This is a test email!")
+        }
+        startActivity(intent)
     }
 
     private fun setCameraActivityResultLauncher() {
         // Handle the image capture result
         // TODO - Implement later
+        cameraActivityResultLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            if (result.resultCode == RESULT_OK) {
+                galleryAddPic()
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -117,5 +156,46 @@ class ExternalActivityCalls : AppCompatActivity() {
     companion object {
         // String for LogCat documentation
         private const val TAG = "External Activity Calls"
+    }
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "JPEG_${timeStamp}_", /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
+        ).apply {
+            // Save a file: path for use with ACTION_VIEW intents
+            currentPhotoPath = absolutePath
+        }
+    }
+
+    private fun dispatchTakePictureIntent() {
+        intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            // Ensure that there's a camera activity to handle the intent
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                // Create the File where the photo should go
+                val photoFile: File? = try {
+                    createImageFile()
+                } catch (ex: IOException) {
+                    // Error occurred while creating the File
+                    null
+                }
+                // Continue only if the File was successfully created
+                photoFile?.also {
+                    val photoURI: Uri = FileProvider.getUriForFile(
+                        this,
+                        "mobiledev.unb.ca.lab3intents.provider",
+                        it
+                    )
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    cameraActivityResultLauncher!!.launch(takePictureIntent)
+                }
+            }
+        }
+        startActivity(intent)
     }
 }
