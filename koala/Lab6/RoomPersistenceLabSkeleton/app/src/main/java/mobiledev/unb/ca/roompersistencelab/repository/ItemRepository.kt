@@ -3,6 +3,7 @@ package mobiledev.unb.ca.roompersistencelab.repository
 import mobiledev.unb.ca.roompersistencelab.db.AppDatabase.Companion.getDatabase
 import android.app.Application
 import mobiledev.unb.ca.roompersistencelab.dao.ItemDao
+import mobiledev.unb.ca.roompersistencelab.entity.Item
 
 class ItemRepository(application: Application) {
     private val itemDao: ItemDao? = getDatabase(application).itemDao()
@@ -17,4 +18,12 @@ class ItemRepository(application: Application) {
     //  See the example project file at
     //  https://github.com/hpowell-UNB/cs2063-fall-2024-examples/blob/main/data_storage/RoomPersistenceLibraryDemo/app/src/main/java/mobiledev/unb/ca/roompersistencetest/repository/ItemRepository.kt
     //  to see examples of how to work with the Executor Service along with Runnables and Callables
+
+    fun insert(item: Item) {
+        itemDao?.insert(item)
+    }
+
+    fun search(name: String): List<Item>? {
+        return itemDao?.getItemsByName(name)
+    }
 }

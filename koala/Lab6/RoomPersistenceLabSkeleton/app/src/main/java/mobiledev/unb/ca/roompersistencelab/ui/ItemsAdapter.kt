@@ -31,6 +31,8 @@ class ItemsAdapter(context: Context, items: List<Item>) : ArrayAdapter<Item>(
             // TODO
             //  Set the text used by textViewName and textViewNum using the data object
             //  This will need to updated once the entity model has been updated
+            textViewName.text = item.name
+            textViewNum.text = item.num.toString()
         }
         
         // Return the completed view to render on screen

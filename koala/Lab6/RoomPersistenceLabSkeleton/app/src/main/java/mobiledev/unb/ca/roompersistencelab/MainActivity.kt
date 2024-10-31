@@ -7,10 +7,13 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import mobiledev.unb.ca.roompersistencelab.entity.Item
 import mobiledev.unb.ca.roompersistencelab.ui.ItemsAdapter
 import mobiledev.unb.ca.roompersistencelab.ui.ItemViewModel
+import mobiledev.unb.ca.roompersistencelab.utils.KeyboardUtils
 
 class MainActivity : AppCompatActivity() {
     private lateinit var itemViewModel: ItemViewModel
@@ -38,9 +41,14 @@ class MainActivity : AppCompatActivity() {
             //  If not display a toast indicating that the data entered was incomplete.
             //  HINT:
             //    Have a look at the TextUtils class (https://developer.android.com/reference/android/text/TextUtils)
+            if (itemEditText?.text.isNullOrEmpty() || numberEditText?.text.isNullOrEmpty()) {
+                Toast.makeText(this, "Incomplete data", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
             // TODO 2
             //  Call the addItem method using the the text from these EditTexts.
+            addItem(itemEditText?.text.toString(), numberEditText?.text.toString())
         }
 
         searchEditText = findViewById(R.id.search_edit_text)
@@ -50,6 +58,8 @@ class MainActivity : AppCompatActivity() {
                 //  v is the search EditText. (EditText is a subclass of TextView.)
                 //  Get the text from this view.
                 //  Call the searchRecords method using the item name.
+                searchRecords(v?.text.toString())
+                return@setOnEditorActionListener true
             }
             false
         }
@@ -61,7 +71,9 @@ class MainActivity : AppCompatActivity() {
     private fun addItem(item: String, num: String) {
         // TODO 1
         //  Make a call to the view model to create a record in the database table
-        itemViewModel.insert(item, num.toInt())
+        Thread {
+            itemViewModel.insert(item, num.toInt())
+        }.start()
 
         // TODO 2
         //  You will need to write a bit of extra code to get the
@@ -73,20 +85,36 @@ class MainActivity : AppCompatActivity() {
         //  choices.
         //  HINT:
         //    There is a utility object called KeyboardUtils which may be helpful here
+        itemEditText?.setText("")
+        numberEditText?.setText("")
+        KeyboardUtils.hideKeyboard(this)
+        Toast.makeText(this, "Item added", Toast.LENGTH_SHORT).show()
     }
 
     private fun searchRecords(item: String) {
         // TODO 1
         //  Make a call to the view model to search for records in the database that match the query item.
         //  Make sure that the results are sorted appropriately
+        Thread {
+            val items = itemViewModel.search(item)
+            runOnUiThread {
+                updateListView(items)
 
-        // TODO 2
-        //  Update the results section.
-        //  If there are no results, set the results TextView to indicate that there are no results.
-        //  If there are results, set the results TextView to indicate that there are results.
-        //  Again, you might need to write a bit of extra code here or elsewhere, to get the UI to behave nicely.
-        //  HINT:
-        //    A helper function updateListView should help display the results
+                // TODO 2
+                //  Update the results section.
+                //  If there are no results, set the results TextView to indicate that there are no results.
+                //  If there are results, set the results TextView to indicate that there are results.
+                //  Again, you might need to write a bit of extra code here or elsewhere, to get the UI to behave nicely.
+                //  HINT:
+                //    A helper function updateListView should help display the results
+
+                if (items.isNullOrEmpty()) {
+                    resultsTextView?.text = "No Results"
+                } else {
+                    resultsTextView?.text = "Results"
+                }
+            }
+        }.start()
     }
 
     private fun updateListView(items: List<Item>?) {
