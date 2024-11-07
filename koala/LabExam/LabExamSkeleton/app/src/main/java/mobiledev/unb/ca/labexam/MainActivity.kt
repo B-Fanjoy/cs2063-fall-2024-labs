@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.ProgressBar
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.LinearLayoutManager
+import mobiledev.unb.ca.labexam.util.LoadDataTask
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,11 +22,17 @@ class MainActivity : AppCompatActivity() {
 
         // TODO: SharedPreferences
         //  Setup the instance of shared preferences you will be using
+        val sharedPreferences = getSharedPreferences("koala", MODE_PRIVATE)
 
         // TODO
         //  1. Create an instance of LoadDataTask using this activity in the constructor
         //  2. Use the setters to pass in the objects needed during execution
         //  (progress bar, recycler view, and shared preferences)
         //  3. Execute it
+        val loadDataTask = LoadDataTask(this)
+        loadDataTask.setProgressBar(progressBar)
+        loadDataTask.setRecyclerView(recyclerView)
+        loadDataTask.setSharedPreferences(sharedPreferences)
+        loadDataTask.execute()
     }
 }

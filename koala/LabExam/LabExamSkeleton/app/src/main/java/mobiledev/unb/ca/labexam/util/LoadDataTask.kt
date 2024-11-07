@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
 import android.widget.ProgressBar
+import android.widget.Toast
 import mobiledev.unb.ca.labexam.model.EventInfo
 import mobiledev.unb.ca.labexam.MyAdapter
 import java.util.concurrent.Executors
@@ -39,6 +40,7 @@ class LoadDataTask(private val activity: AppCompatActivity) {
         //  Hint:
         //    Read the documentation on ProgressBar - http://developer.android.com/reference/android/widget/ProgressBar.html
         //    Refer to the threading examples should you need extra inspiration
+        progressBar!!.visibility = ProgressBar.VISIBLE
 
         // Update the display elements in a separate thread
         Executors.newSingleThreadExecutor()
@@ -46,16 +48,20 @@ class LoadDataTask(private val activity: AppCompatActivity) {
                 val mainHandler = Handler(Looper.getMainLooper())
                 // TODO
                 //  Load the data from the JSON assets file and return the list of host nations
+                val jsonUtils = JsonUtils(appContext)
+                val eventsInfoList = jsonUtils.getHostCities()
 
                 // Simulating long-running operation
                 for (i in 1 until DOWNLOAD_TIME) {
                     sleep()
                     // TODO
                     //  Update the progress bar using values
+                    progressBar!!.progress = i
                 }
 
                 // TODO
                 //  Using the updateDisplay method update the UI with the results
+                mainHandler.post { updateDisplay(eventsInfoList) }
             }
     }
 
@@ -71,12 +77,16 @@ class LoadDataTask(private val activity: AppCompatActivity) {
     private fun updateDisplay(eventsInfoList: List<EventInfo>) {
         // TODO
         //  Reset the progress bar, and make it disappear
+        progressBar!!.progress = 0
+        progressBar!!.visibility = ProgressBar.INVISIBLE
 
         // TODO
         //  Setup the RecyclerView using the setupRecyclerView method
+        setupRecyclerView(eventsInfoList)
 
         // TODO
         //  Create a Toast indicating that the file has been loaded
+        Toast.makeText(appContext, "File has been loaded", Toast.LENGTH_SHORT).show()
     }
 
     private fun setupRecyclerView(eventsInfoList: List<EventInfo>) {

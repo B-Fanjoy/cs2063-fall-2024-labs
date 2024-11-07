@@ -1,5 +1,6 @@
 package mobiledev.unb.ca.labexam
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import mobiledev.unb.ca.labexam.model.EventInfo
 import android.content.SharedPreferences
@@ -33,17 +34,32 @@ class MyAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         // TODO
         //  Get the item at index position in dataSet
+        val eventInfo = dataset[position]
 
         // TODO
         //  Set the TextView in the ViewHolder to be the eventTitle attribute
+        val eventTitleTextView = holder.mTextView
+        eventTitleTextView.text = eventInfo.eventTitle
 
         // TODO
         //  Part 1 - Set the onClickListener for the TextView in the ViewHolder such
         //    that when it is clicked, it creates an explicit intent to launch DetailActivity
         //    with extra pieces of information in this intent.
+        eventTitleTextView.setOnClickListener {
+            val intent = Intent(parentActivity, DetailActivity::class.java)
+            intent.putExtra("number", eventInfo.number)
+            intent.putExtra("year", eventInfo.year)
+            intent.putExtra("dates", eventInfo.dates)
+            intent.putExtra("hostNation", eventInfo.hostCity)
+            intent.putExtra("url", eventInfo.wikipediaLink)
+            parentActivity.startActivity(intent)
+        }
+
+
         // TODO: SharedPreferences
         //  Part 2 - Update shared preferences to indicate this has been viewed
         //    HINT: The private function updateSharedPreferences can be used for this
+        updateSharedPreferences(eventInfo.number, sharedPreferences.getBoolean(eventInfo.number, false))
 
         // TODO: SharedPreferences
         //  Set the CheckBox in the ViewHolder (holder) to be checked if the
@@ -52,6 +68,9 @@ class MyAdapter(
         //  preferences for this id, then the checkbox should not be checked
         //  (i.e., assume a default value of false for anything not in
         //  the shared preferences).
+        val checkBox = holder.mCheckBox
+        val prefsValue = sharedPreferences.getBoolean(eventInfo.number, false)
+        checkBox.isChecked = prefsValue
 
         // Hints:
         // https://developer.android.com/reference/android/content/SharedPreferences.html#getBoolean(java.lang.String,%20boolean)
@@ -66,6 +85,7 @@ class MyAdapter(
             // TODO: SharedPreferences
             //   Save the CheckBox selected state
             //   HINT: The private updateSharedPreferences function can be used here
+            updateSharedPreferences(eventInfo.number, isChecked)
         }
     }
 
@@ -73,14 +93,17 @@ class MyAdapter(
         // TODO: SharedPreferences
         //  Get a SharedPreferences.Editor for SharedPreferences
         //  Hint: https://developer.android.com/reference/android/content/SharedPreferences.html#edit()
+        val editor = sharedPreferences.edit()
 
         // TODO: Shared Preferences
         //  Set the value stored in SharedPreferences for the EventInfo number to be the value of isChecked
         //  Hint: https://developer.android.com/reference/android/content/SharedPreferences.Editor.html#putBoolean(java.lang.String,%20boolean)
+        editor.putBoolean(prefsKey, prefsValue)
 
         // TODO: SharedPreferences
         //  Apply the changes from this editor
         //  Hint: https://developer.android.com/reference/android/content/SharedPreferences.Editor.html#commit()
+        editor.apply()
     }
 
     override fun getItemCount(): Int {
