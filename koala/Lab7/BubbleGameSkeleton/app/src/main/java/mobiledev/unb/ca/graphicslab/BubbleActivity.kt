@@ -54,6 +54,12 @@ class BubbleActivity : Activity(), BubbleListener {
             // TODO
             //   If the status returns 0 call setupGestureListener
             //   Else log a message that the sound could not be loaded and finish
+            if (status == 0) {
+                setupGestureDetector()
+            } else {
+                Log.e(TAG, "Could not load sound")
+                finish()
+            }
         }
     }
 
@@ -69,13 +75,18 @@ class BubbleActivity : Activity(), BubbleListener {
         gameScreen!!.post {
             // TODO
             //  Remove the BubbleView from the game screen
+            gameScreen!!.removeView(bubbleView)
 
             // TODO
             //  Update the TextView displaying the number of bubbles
+            updateNumBubblesTextView()
 
             // TODO
             //  If the bubble was popped by user play the popping sound
             //  HINT: Use the streamVolume for left and right volume parameters
+            if (wasPopped) {
+                soundPool!!.play(soundID, streamVolume, streamVolume, 1, 0, 1f)
+            }
         }
     }
 
@@ -95,6 +106,15 @@ class BubbleActivity : Activity(), BubbleListener {
         // TODO
         //  Make a new sound pool allowing up to SOUND_POOL_MAX_STREAMS streams
         //  Store the object value in soundPool
+        soundPool = SoundPool.Builder()
+            .setMaxStreams(SOUND_POOL_MAX_STREAMS)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_GAME)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            )
+            .build()
     }
 
     private fun setStreamVolume(context: Context) {
@@ -118,6 +138,7 @@ class BubbleActivity : Activity(), BubbleListener {
         // TODO
         //  Load the sound from res/raw/bubble_pop.wav
         //  Store the value in soundID
+        soundID = soundPool!!.load(context, resourceId, priority)
     }
 
     // Set up GestureDetector
@@ -141,7 +162,12 @@ class BubbleActivity : Activity(), BubbleListener {
                     //    You can get all Views from the gameScreen object at a time using
                     //    childCount method and get individual Views using
                     //    the getChildAt() method
-
+                    for (i in 0 until gameScreen!!.childCount) {
+                        val view = gameScreen!!.getChildAt(i) as BubbleView
+                        if (view.intersects(event1!!.x, event1.y)) {
+                            view.deflect(velocityX, velocityY)
+                        }
+                    }
                     return true
                 }
 
@@ -160,7 +186,24 @@ class BubbleActivity : Activity(), BubbleListener {
                     //    - You can get all Views from the gameScreen object at a time using
                     //      childCount method and get individual Views using
                     //      the getChildAt() function
+                    var isBubbleTapped = false
+                    for (i in 0 until gameScreen!!.childCount) {
+                        val view = gameScreen!!.getChildAt(i) as BubbleView
+                        if (view.intersects(event.x, event.y)) {
+                            view.stopMovement()
+                            removeBubbleView(view, true)
+                            isBubbleTapped = true
+                            break
+                        }
+                    }
 
+                    if (!isBubbleTapped) {
+                        val bubble = BubbleView(this@BubbleActivity)
+                        bubble.setListener(this@BubbleActivity)
+                        gameScreen!!.addView(bubble)
+                        bubble.startMovement(event.x, event.y)
+                        updateNumBubblesTextView()
+                    }
                     return true
                 }
             })
@@ -170,8 +213,7 @@ class BubbleActivity : Activity(), BubbleListener {
         // TODO
         //  Delegate the touch to the gestureDetector
 
-        // Remove this when you're done the above TODO
-        return true
+        return gestureDetector.onTouchEvent(event)
     }
 
     override fun onPause() {
@@ -179,6 +221,8 @@ class BubbleActivity : Activity(), BubbleListener {
 
         // TODO
         //  Release all SoundPool resources (including sounds)
+        soundPool!!.release()
+        soundPool = null
     }
 
     companion object {

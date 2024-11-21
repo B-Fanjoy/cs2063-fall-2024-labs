@@ -66,6 +66,8 @@ class BubbleView(context: Context) : View(context) {
         // TODO
         //  Set mDx and mDy to indicate movement direction and speed
         //  Limit speed in the x and y direction to [-3..3] pixels per movement
+        mDx = generateRandomNumberInRange(-3, 3).toFloat()
+        mDy = generateRandomNumberInRange(-3, 3).toFloat()
     }
 
     private fun createScaledBitmap(): Int {
@@ -78,6 +80,7 @@ class BubbleView(context: Context) : View(context) {
 
         // TODO
         //  Set the scaled bitmap (scaledBitmap) value using size set above
+        scaledBitmap = Bitmap.createScaledBitmap(bitmap, scaledBitmapSize, scaledBitmapSize, false)
 
         //  Return the scaledBitmapSize
         return scaledBitmapSize
@@ -107,6 +110,11 @@ class BubbleView(context: Context) : View(context) {
             //  If the BubbleView exits the display, stop the BubbleView's
             //  Worker Thread. (Use stopMovement() to do this.) Otherwise,
             //  request that the BubbleView be redrawn.
+            if (!moveWhileOnScreen()) {
+                stopMovement()
+            } else {
+                postInvalidate()
+            }
 
         }, 0, REFRESH_RATE.toLong(), TimeUnit.MILLISECONDS)
     }
@@ -120,8 +128,7 @@ class BubbleView(context: Context) : View(context) {
         // TODO
         //  Return true if the BubbleView intersects position (x,y)
 
-        // Remove this when you're done the above TODO
-        return true
+        return sqrt((x!! - centerX).pow(2) + (y!! - centerY).pow(2)) <= radius
     }
 
     // Stops the Bubble's movement
@@ -134,6 +141,7 @@ class BubbleView(context: Context) : View(context) {
             // TODO
             //  Remove the bubble view from tha parent activity
             //  HINT: Use the listener onBubbleViewRemoved() function to do this
+            listener.onBubbleViewRemoved(this, false)
         }
     }
 
@@ -149,20 +157,25 @@ class BubbleView(context: Context) : View(context) {
     override fun onDraw(canvas: Canvas) {
         // TODO
         //  Save the canvas
+        canvas.save()
 
         // TODO
         //  Increase the rotation of the original image by the
         //  value of speedOfRotation
+        rotate += speedOfRotation
 
         // TODO
         //  Rotate the canvas by current rotation
         //  Hint - Rotate around the bubble's center, not its position
+        canvas.rotate(rotate.toFloat(), xPosition + radius, yPosition + radius)
 
         // TODO
         //  Draw the bitmap at it's new location
+        canvas.drawBitmap(scaledBitmap!!, xPosition, yPosition, painter)
 
         // TODO
         //  Restore the canvas
+        canvas.restore()
     }
 
     // Returns true if the BubbleView is still on the screen after the move
