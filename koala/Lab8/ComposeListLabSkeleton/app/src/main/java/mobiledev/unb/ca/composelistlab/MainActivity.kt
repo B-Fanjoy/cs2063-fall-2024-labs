@@ -7,13 +7,25 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import mobiledev.unb.ca.composelistlab.models.Course
 import mobiledev.unb.ca.composelistlab.models.dummyData
 import mobiledev.unb.ca.composelistlab.ui.theme.ComposeListLabSkeletonTheme
@@ -63,17 +75,25 @@ fun MainContent(testMode: Boolean = false) {
 @Composable
 fun MainActivityContent(courseListing: List<Course>) {
     // Temporarily show a single element; we will work on showing the entire list
-    CourseItem(courseListing.first())
+    //CourseItem(courseListing.first())
 
     // TODO: Replace single element with a scrolling list
     //  HINTS:
     //     Use each Course element in the course listing array to populate the view
     //     Take a look at using a LazyColumn (additional information can be found
     //     here - https://developer.android.com/develop/ui/compose/lists#lazy)
+
+    LazyColumn {
+        items(courseListing) { course ->
+            CourseItem(course)
+        }
+    }
+
 }
 
 @Composable
 fun CourseItem(course: Course) {
+    val context = LocalContext.current
     // TODO 1: Create a row and show the course title using a Text object
     //    and apply basic styling.
     //  HINTS:
@@ -91,6 +111,30 @@ fun CourseItem(course: Course) {
 
     // TODO - Optional 2: Include the image from R.drawable.course_iconfinder
     //  Class documentation - https://developer.android.com/reference/kotlin/androidx/compose/foundation/package-summary#Image
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        elevation = 4.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .clickable { goToDetailActivity(course, context) }
+                .padding(16.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.course_iconfinder),
+                contentDescription = "Course Icon",
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = course.title,
+                style = MaterialTheme.typography.h6
+            )
+        }
+    }
+
 }
 
 private fun goToDetailActivity(course: Course, context: Context) {
@@ -110,6 +154,6 @@ fun MainActivityPreview() {
     ComposeListLabSkeletonTheme {
         // TODO: Set the testMode to false when the scrolling list
         //   has been completed
-        MainContent(testMode = true)
+        MainContent(testMode = false)
     }
 }
